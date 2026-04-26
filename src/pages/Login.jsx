@@ -5,41 +5,65 @@ import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { fetchTrending, getImageUrl } from "../api/tmdb";
 
-// ─── Poster Column ──────────────────────────────────────────
-// Each column scrolls at a different speed, some go up, some down
-function PosterColumn({ posters, direction = "up", duration = 30, offset = 0 }) {
+// ─── CSS injected once ──────────────────────────────────────
+const CSS = `
+  @keyframes scrollUp {
+    0%   { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
+  @keyframes scrollDown {
+    0%   { transform: translateY(-50%); }
+    100% { transform: translateY(0); }
+  }
+  .col-up {
+    animation: scrollUp var(--dur, 30s) linear infinite;
+    will-change: transform;
+  }
+  .col-down {
+    animation: scrollDown var(--dur, 30s) linear infinite;
+    will-change: transform;
+  }
+  .poster-col img {
+    filter: saturate(0.65) brightness(0.55);
+    display: block;
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+`;
+
+function injectCSS() {
+  if (document.getElementById("login-col-css")) return;
+  const tag = document.createElement("style");
+  tag.id = "login-col-css";
+  tag.textContent = CSS;
+  document.head.appendChild(tag);
+}
+
+// ─── Single column — pure CSS scroll, never stops ──────────
+function PosterColumn({ posters, direction, duration }) {
   if (!posters.length) return null;
 
-  // Duplicate for seamless loop
-  const doubled = [...posters, ...posters];
+  // Triple the posters so there's always content visible
+  const items = [...posters, ...posters, ...posters];
 
   return (
-    <div style={columnWrapStyle}>
-      <motion.div
-        style={columnInnerStyle}
-        animate={{
-          y: direction === "up"
-            ? [`${offset}%`, `${offset - 50}%`]
-            : [`${offset - 50}%`, `${offset}%`],
-        }}
-        transition={{
-          duration,
-          repeat: Infinity,
-          ease: "linear",
-        }}
+    <div className="poster-col" style={colWrapStyle}>
+      <div
+        className={direction === "up" ? "col-up" : "col-down"}
+        style={{ "--dur": `${duration}s`, display: "flex", flexDirection: "column", gap: "8px" }}
       >
-        {doubled.map((src, i) => (
-          <div key={i} style={posterItemStyle}>
-            <img
-              src={src}
-              alt=""
-              style={posterImgStyle}
-              loading="lazy"
-              onError={(e) => { e.target.style.opacity = 0; }}
-            />
-          </div>
+        {items.map((src, i) => (
+          <img
+            key={i}
+            src={src}
+            alt=""
+            loading="lazy"
+            onError={(e) => { e.target.style.visibility = "hidden"; }}
+          />
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -52,38 +76,37 @@ export default function Login() {
   const from       = location.state?.from?.pathname || "/home";
 
   const [email,    setEmail]    = useState("");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("demo123");
   const [showPass, setShowPass] = useState(false);
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
   const [focused,  setFocused]  = useState(null);
+  const [columns,  setColumns]  = useState([[], [], [], [], []]);
 
-  // Poster columns data
-  const [columns, setColumns] = useState([[], [], [], [], []]);
+  // Inject CSS keyframes once
+  useEffect(() => { injectCSS(); }, []);
 
+  // Fetch posters once on mount
   useEffect(() => {
-    // Fetch trending to fill poster grid
     fetchTrending("all", "week")
       .then((data) => {
-        const results = data?.results || [];
-        const posters = results
+        const posters = (data?.results || [])
           .filter((r) => r.poster_path)
           .map((r) => getImageUrl(r.poster_path, "w342"));
 
-        // Pad with repeats if fewer than 20 posters
-        while (posters.length < 20) posters.push(...posters);
+        // Need at least 8 per column — pad by repeating
+        while (posters.length < 40) posters.push(...posters.slice(0, 20));
 
-        // Split into 5 columns of 7 each, staggered
-        setColumns([
-          posters.slice(0, 7),
-          posters.slice(3, 10),
-          posters.slice(6, 13),
-          posters.slice(9, 16),
-          posters.slice(12, 19),
-        ]);
+        // Shuffle for variety
+        const shuffled = [...posters].sort(() => Math.random() - 0.5);
+
+        const chunk = (arr, size) =>
+          Array.from({ length: 5 }, (_, i) => arr.slice(i * size, i * size + size));
+
+        setColumns(chunk(shuffled, 8));
       })
       .catch(() => {});
-  }, []);
+  }, []); // Empty deps — run once, never re-runs
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -99,39 +122,49 @@ export default function Login() {
     }
   };
 
-  const fillDemo = (email, pass) => {
-    setEmail(email);
+  const fillDemo = (em, pass) => {
+    setEmail(em);
     setPassword(pass);
     setError("");
   };
 
+  // Column config — direction and speed
+  const COL_CONFIG = [
+    { direction: "up",   duration: 38 },
+    { direction: "down", duration: 29 },
+    { direction: "up",   duration: 44 },
+    { direction: "down", duration: 33 },
+    { direction: "up",   duration: 41 },
+  ];
+
   return (
     <div style={pageStyle}>
 
-      {/* ── Poster grid background ── */}
-      <div style={bgStyle}>
-        <PosterColumn posters={columns[0]} direction="up"   duration={35} offset={0}   />
-        <PosterColumn posters={columns[1]} direction="down" duration={28} offset={-10} />
-        <PosterColumn posters={columns[2]} direction="up"   duration={40} offset={-5}  />
-        <PosterColumn posters={columns[3]} direction="down" duration={32} offset={-15} />
-        <PosterColumn posters={columns[4]} direction="up"   duration={38} offset={-8}  />
+      {/* ── Poster grid ── */}
+      <div style={bgGridStyle} aria-hidden="true">
+        {COL_CONFIG.map((cfg, i) => (
+          <PosterColumn
+            key={i}
+            posters={columns[i]}
+            direction={cfg.direction}
+            duration={cfg.duration}
+          />
+        ))}
       </div>
 
       {/* ── Overlays ── */}
-      {/* Dark vignette from center out */}
-      <div style={vignetteStyle} />
-      {/* Radial clear zone around form */}
-      <div style={clearZoneStyle} />
+      <div style={overlay1} />
+      <div style={overlay2} />
 
       {/* ── Glow orbs ── */}
-      <div style={orbTopStyle} />
-      <div style={orbBottomStyle} />
+      <div style={orbCyan} />
+      <div style={orbPurple} />
 
-      {/* ── Form card ── */}
+      {/* ── Glass card ── */}
       <motion.div
-        initial={{ opacity: 0, y: 32, scale: 0.96 }}
+        initial={{ opacity: 0, y: 28, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         style={cardStyle}
       >
         {/* Logo */}
@@ -151,11 +184,8 @@ export default function Login() {
           {/* Email */}
           <div style={fieldStyle}>
             <label style={labelStyle}>Email</label>
-            <div style={{
-              ...inputWrapStyle,
-              ...(focused === "email" ? inputFocusStyle : {}),
-            }}>
-              <Mail size={14} style={inputIconStyle} />
+            <div style={{ ...inputWrapStyle, ...(focused === "email" ? inputFocusStyle : {}) }}>
+              <Mail size={14} style={iconStyle} />
               <input
                 type="email"
                 value={email}
@@ -172,11 +202,8 @@ export default function Login() {
           {/* Password */}
           <div style={fieldStyle}>
             <label style={labelStyle}>Password</label>
-            <div style={{
-              ...inputWrapStyle,
-              ...(focused === "password" ? inputFocusStyle : {}),
-            }}>
-              <Lock size={14} style={inputIconStyle} />
+            <div style={{ ...inputWrapStyle, ...(focused === "password" ? inputFocusStyle : {}) }}>
+              <Lock size={14} style={iconStyle} />
               <input
                 type={showPass ? "text" : "password"}
                 value={password}
@@ -216,9 +243,9 @@ export default function Login() {
           <motion.button
             type="submit"
             disabled={loading}
-            whileHover={!loading ? { scale: 1.02, boxShadow: "0 8px 32px var(--color-accent-glow)" } : {}}
-            whileTap={!loading ? { scale: 0.98 } : {}}
-            style={{ ...submitStyle, opacity: loading ? 0.7 : 1 }}
+            whileHover={!loading ? { scale: 1.02 } : {}}
+            whileTap={!loading ? { scale: 0.97 } : {}}
+            style={{ ...submitStyle, opacity: loading ? 0.7 : 1, cursor: loading ? "not-allowed" : "pointer" }}
           >
             {loading
               ? <Loader2 size={16} style={{ animation: "spin 0.7s linear infinite" }} />
@@ -229,27 +256,28 @@ export default function Login() {
 
         {/* Divider */}
         <div style={dividerStyle}>
-          <div style={dividerLineStyle} />
-          <span style={dividerTextStyle}>demo accounts</span>
-          <div style={dividerLineStyle} />
+          <div style={divLineStyle} />
+          <span style={divTextStyle}>demo accounts</span>
+          <div style={divLineStyle} />
         </div>
 
-        {/* Demo credentials */}
+        {/* Demo credentials — click to fill */}
         <div style={demoBoxStyle}>
           {[
             { email: "demo@trangmix.com", pass: "demo123" },
             { email: "test@trangmix.com", pass: "test123" },
-          ].map((cred) => (
-            <motion.button
-              key={cred.email}
+          ].map((c) => (
+            <button
+              key={c.email}
               type="button"
-              onClick={() => fillDemo(cred.email, cred.pass)}
-              whileHover={{ background: "rgba(0,229,255,0.06)" }}
-              style={demoRowStyle}
+              onClick={() => fillDemo(c.email, c.pass)}
+              style={demoBtnStyle}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,229,255,0.06)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
             >
-              <span style={demoEmailStyle}>{cred.email}</span>
-              <span style={demoPassStyle}>{cred.pass}</span>
-            </motion.button>
+              <span style={demoEmailStyle}>{c.email}</span>
+              <span style={demoPassStyle}>{c.pass}</span>
+            </button>
           ))}
         </div>
       </motion.div>
@@ -267,9 +295,7 @@ const pageStyle = {
   overflow: "hidden",
   background: "var(--color-surface)",
 };
-
-// Poster grid
-const bgStyle = {
+const bgGridStyle = {
   position: "absolute",
   inset: 0,
   display: "grid",
@@ -277,82 +303,51 @@ const bgStyle = {
   gap: "8px",
   padding: "8px",
   overflow: "hidden",
+  pointerEvents: "none",
 };
-const columnWrapStyle = {
+const colWrapStyle = {
   overflow: "hidden",
-  borderRadius: "12px",
-};
-const columnInnerStyle = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "8px",
-};
-const posterItemStyle = {
   borderRadius: "10px",
-  overflow: "hidden",
-  flexShrink: 0,
-  aspectRatio: "2/3",
-};
-const posterImgStyle = {
-  width: "100%",
-  height: "100%",
-  objectFit: "cover",
-  display: "block",
-  filter: "saturate(0.7) brightness(0.6)",
 };
 
-// Overlays
-const vignetteStyle = {
+// Layered overlays
+const overlay1 = {
   position: "absolute",
   inset: 0,
-  background: `
-    radial-gradient(
-      ellipse 80% 80% at 50% 50%,
-      rgba(8,11,20,0.55) 0%,
-      rgba(8,11,20,0.88) 60%,
-      rgba(8,11,20,0.97) 100%
-    )
-  `,
+  background: "radial-gradient(ellipse 90% 90% at 50% 50%, rgba(8,11,20,0.6) 0%, rgba(8,11,20,0.93) 70%, rgba(8,11,20,0.99) 100%)",
   zIndex: 1,
+  pointerEvents: "none",
 };
-const clearZoneStyle = {
+const overlay2 = {
   position: "absolute",
   inset: 0,
-  background: `
-    radial-gradient(
-      ellipse 50% 70% at 50% 50%,
-      transparent 0%,
-      transparent 40%,
-      rgba(8,11,20,0.4) 100%
-    )
-  `,
-  zIndex: 2,
+  background: "linear-gradient(to bottom, rgba(8,11,20,0.5) 0%, transparent 30%, transparent 70%, rgba(8,11,20,0.5) 100%)",
+  zIndex: 1,
+  pointerEvents: "none",
 };
 
 // Glow orbs
-const orbTopStyle = {
+const orbCyan = {
   position: "absolute",
-  width: "600px",
-  height: "600px",
+  width: "700px",
+  height: "700px",
   borderRadius: "50%",
-  background: "radial-gradient(circle, rgba(0,229,255,0.07) 0%, transparent 70%)",
-  top: "-200px",
+  background: "radial-gradient(circle, rgba(0,229,255,0.06) 0%, transparent 70%)",
+  top: "-250px",
   left: "50%",
   transform: "translateX(-50%)",
-  filter: "blur(40px)",
   zIndex: 2,
   pointerEvents: "none",
 };
-const orbBottomStyle = {
+const orbPurple = {
   position: "absolute",
   width: "500px",
   height: "500px",
   borderRadius: "50%",
-  background: "radial-gradient(circle, rgba(124,106,255,0.08) 0%, transparent 70%)",
-  bottom: "-150px",
+  background: "radial-gradient(circle, rgba(124,106,255,0.07) 0%, transparent 70%)",
+  bottom: "-180px",
   left: "50%",
   transform: "translateX(-50%)",
-  filter: "blur(40px)",
   zIndex: 2,
   pointerEvents: "none",
 };
@@ -362,97 +357,86 @@ const cardStyle = {
   position: "relative",
   zIndex: 10,
   width: "100%",
-  maxWidth: "400px",
+  maxWidth: "390px",
   margin: "24px 16px",
-  padding: "40px 36px",
-  background: "rgba(10, 13, 22, 0.82)",
-  backdropFilter: "blur(32px) saturate(160%)",
-  WebkitBackdropFilter: "blur(32px) saturate(160%)",
-  border: "1px solid rgba(255,255,255,0.08)",
+  padding: "38px 34px",
+  background: "rgba(8, 11, 20, 0.78)",
+  backdropFilter: "blur(40px) saturate(180%)",
+  WebkitBackdropFilter: "blur(40px) saturate(180%)",
+  border: "1px solid rgba(255,255,255,0.07)",
   borderRadius: "24px",
-  boxShadow: `
-    0 32px 80px rgba(0,0,0,0.6),
-    0 0 0 1px rgba(255,255,255,0.04),
-    inset 0 1px 0 rgba(255,255,255,0.06)
-  `,
+  boxShadow: "0 32px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05)",
 };
 const logoRowStyle = {
   display: "flex",
   alignItems: "center",
   gap: "10px",
-  marginBottom: "28px",
+  marginBottom: "26px",
 };
 const logoMarkStyle = {
-  width: "36px",
-  height: "36px",
-  borderRadius: "9px",
+  width: "34px",
+  height: "34px",
+  borderRadius: "8px",
   background: "var(--color-accent)",
-  color: "var(--color-surface)",
+  color: "#080b14",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   fontFamily: "var(--font-display)",
   fontWeight: 800,
-  fontSize: "18px",
-  boxShadow: "0 0 20px var(--color-accent-glow)",
+  fontSize: "17px",
+  boxShadow: "0 0 18px var(--color-accent-glow)",
+  flexShrink: 0,
 };
 const logoTextStyle = {
   fontFamily: "var(--font-display)",
-  fontSize: "20px",
+  fontSize: "19px",
   fontWeight: 800,
   color: "#fff",
-  letterSpacing: "-0.5px",
+  letterSpacing: "-0.4px",
 };
 const cardTitleStyle = {
   fontFamily: "var(--font-display)",
-  fontSize: "26px",
+  fontSize: "24px",
   fontWeight: 800,
   color: "#fff",
-  letterSpacing: "-0.5px",
+  letterSpacing: "-0.4px",
   marginBottom: "4px",
   lineHeight: 1.2,
 };
 const cardSubStyle = {
   fontSize: "13px",
-  color: "rgba(255,255,255,0.4)",
-  marginBottom: "28px",
+  color: "rgba(255,255,255,0.38)",
+  marginBottom: "26px",
 };
 
 // Form
-const formStyle = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "14px",
-};
-const fieldStyle = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "6px",
-};
+const formStyle = { display: "flex", flexDirection: "column", gap: "14px" };
+const fieldStyle = { display: "flex", flexDirection: "column", gap: "6px" };
 const labelStyle = {
-  fontSize: "11px",
-  fontWeight: 600,
-  color: "rgba(255,255,255,0.4)",
+  fontSize: "10px",
+  fontWeight: 700,
+  color: "rgba(255,255,255,0.35)",
   textTransform: "uppercase",
-  letterSpacing: "0.06em",
+  letterSpacing: "0.07em",
 };
 const inputWrapStyle = {
   position: "relative",
   display: "flex",
   alignItems: "center",
-  borderRadius: "12px",
-  border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: "11px",
+  border: "1px solid rgba(255,255,255,0.07)",
   background: "rgba(255,255,255,0.04)",
-  transition: "border-color 200ms, box-shadow 200ms",
+  transition: "border-color 200ms ease, box-shadow 200ms ease",
 };
 const inputFocusStyle = {
-  borderColor: "var(--color-accent)",
-  boxShadow: "0 0 0 3px rgba(0,229,255,0.12)",
+  borderColor: "rgba(0,229,255,0.5)",
+  boxShadow: "0 0 0 3px rgba(0,229,255,0.1)",
 };
-const inputIconStyle = {
+const iconStyle = {
   position: "absolute",
-  left: "14px",
-  color: "rgba(255,255,255,0.25)",
+  left: "13px",
+  color: "rgba(255,255,255,0.2)",
   flexShrink: 0,
 };
 const inputStyle = {
@@ -460,70 +444,59 @@ const inputStyle = {
   background: "transparent",
   border: "none",
   outline: "none",
-  padding: "13px 14px 13px 40px",
+  padding: "12px 13px 12px 38px",
   fontSize: "14px",
   color: "#fff",
   fontFamily: "var(--font-body)",
-  borderRadius: "12px",
+  borderRadius: "11px",
 };
 const eyeBtnStyle = {
   position: "absolute",
-  right: "12px",
+  right: "11px",
   background: "none",
   border: "none",
-  color: "rgba(255,255,255,0.25)",
+  color: "rgba(255,255,255,0.22)",
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
   padding: "4px",
   borderRadius: "6px",
-  transition: "color 150ms",
 };
 const errorStyle = {
   fontSize: "12px",
   color: "#f87171",
-  background: "rgba(239,68,68,0.08)",
-  border: "1px solid rgba(239,68,68,0.2)",
+  background: "rgba(239,68,68,0.07)",
+  border: "1px solid rgba(239,68,68,0.18)",
   borderRadius: "8px",
   padding: "8px 12px",
 };
 const submitStyle = {
   marginTop: "4px",
-  padding: "14px",
-  borderRadius: "12px",
+  padding: "13px",
+  borderRadius: "11px",
   background: "var(--color-accent)",
-  color: "var(--color-surface)",
+  color: "#080b14",
   fontFamily: "var(--font-display)",
   fontWeight: 700,
   fontSize: "14px",
   border: "none",
-  cursor: "pointer",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   gap: "8px",
   boxShadow: "0 4px 20px var(--color-accent-glow)",
   letterSpacing: "0.02em",
-  transition: "opacity 200ms",
+  transition: "opacity 200ms, box-shadow 200ms",
 };
 
 // Divider
-const dividerStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: "10px",
-  margin: "24px 0 16px",
-};
-const dividerLineStyle = {
-  flex: 1,
-  height: "1px",
-  background: "rgba(255,255,255,0.06)",
-};
-const dividerTextStyle = {
+const dividerStyle = { display: "flex", alignItems: "center", gap: "10px", margin: "22px 0 14px" };
+const divLineStyle = { flex: 1, height: "1px", background: "rgba(255,255,255,0.06)" };
+const divTextStyle = {
   fontSize: "10px",
-  color: "rgba(255,255,255,0.25)",
+  color: "rgba(255,255,255,0.22)",
   textTransform: "uppercase",
-  letterSpacing: "0.08em",
+  letterSpacing: "0.07em",
   whiteSpace: "nowrap",
 };
 
@@ -532,17 +505,17 @@ const demoBoxStyle = {
   display: "flex",
   flexDirection: "column",
   gap: "2px",
-  background: "rgba(0,229,255,0.03)",
-  border: "1px solid rgba(0,229,255,0.08)",
-  borderRadius: "12px",
+  background: "rgba(0,229,255,0.025)",
+  border: "1px solid rgba(0,229,255,0.07)",
+  borderRadius: "11px",
   padding: "4px",
 };
-const demoRowStyle = {
+const demoBtnStyle = {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  padding: "9px 12px",
-  borderRadius: "9px",
+  padding: "9px 11px",
+  borderRadius: "8px",
   border: "none",
   cursor: "pointer",
   textAlign: "left",
@@ -552,12 +525,12 @@ const demoRowStyle = {
 };
 const demoEmailStyle = {
   fontSize: "11px",
-  color: "rgba(255,255,255,0.55)",
+  color: "rgba(255,255,255,0.5)",
   fontFamily: "var(--font-mono)",
 };
 const demoPassStyle = {
   fontSize: "11px",
   color: "var(--color-accent)",
   fontFamily: "var(--font-mono)",
-  opacity: 0.7,
+  opacity: 0.65,
 };
