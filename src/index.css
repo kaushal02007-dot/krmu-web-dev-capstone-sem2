@@ -1,0 +1,743 @@
+/* ============================================================
+   TrangMix — Global Styles & Design System
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Design Tokens ───────────────────────────────────────── */
+:root {
+  /* Surfaces — deep navy-black, not flat black */
+  --color-surface: #080b14;
+  --color-surface-raised: #0f1320;
+  --color-surface-overlay: #161b2e;
+  --color-surface-border: rgba(255, 255, 255, 0.06);
+
+  /* Accent — vivid cyan-electric, unique to TrangMix */
+  --color-accent: #00e5ff;
+  --color-accent-hover: #33ecff;
+  --color-accent-muted: rgba(0, 229, 255, 0.12);
+  --color-accent-glow: rgba(0, 229, 255, 0.35);
+
+  /* Text hierarchy */
+  --color-text-primary: #f0f4ff;
+  --color-text-secondary: rgba(240, 244, 255, 0.65);
+  --color-text-muted: rgba(240, 244, 255, 0.35);
+
+  /* Dynamic — updated per-media by colorExtractor */
+  --dynamic-primary: #00e5ff;
+  --dynamic-secondary: #7c6aff;
+  --dynamic-glow: rgba(0, 229, 255, 0.3);
+
+  /* Typography */
+  --font-display: 'Syne';
+  --font-body: 'Outfit';
+  --font-mono: 'JetBrains Mono';
+
+  /* Spacing rhythm */
+  --navbar-height: 72px;
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 72px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-base: 250ms cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-slow: 400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ─── Base Reset & Body ───────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-body), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* ─── Custom Scrollbar ────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-overlay);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ─── Typography Defaults ─────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--color-text-primary);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img, video {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-body), sans-serif;
+  border: none;
+  background: none;
+}
+
+/* ─── Shimmer Skeleton ────────────────────────────────────── */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-raised) 0px,
+    var(--color-surface-overlay) 300px,
+    var(--color-surface-raised) 600px
+  );
+  background-size: 900px 100%;
+  animation: shimmer 1.8s infinite linear;
+}
+
+/* ─── Utility Classes ─────────────────────────────────────── */
+@layer utilities {
+  /* Glass morphism card */
+  .glass {
+    background: rgba(15, 19, 32, 0.7);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid var(--color-surface-border);
+  }
+
+  /* Glow effects */
+  .glow-accent {
+    box-shadow: 0 0 24px var(--color-accent-glow);
+  }
+
+  .glow-dynamic {
+    box-shadow: 0 0 32px var(--dynamic-glow);
+  }
+
+  /* Text clamp utilities */
+  .line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+  .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+
+  /* Noise texture overlay */
+  .noise-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  /* Hide scrollbar but keep scroll */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+  /* Aspect ratios */
+  .aspect-poster { aspect-ratio: 2 / 3; }
+  .aspect-backdrop { aspect-ratio: 16 / 9; }
+  .aspect-square { aspect-ratio: 1 / 1; }
+
+  /* Focus ring */
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* Truncate text */
+  .truncate-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ─── Page Transition Wrapper ─────────────────────────────── */
+.page-transition-wrapper {
+  min-height: calc(100vh - var(--navbar-height));
+}
+
+/* ─── Gradient Overlays ───────────────────────────────────── */
+.gradient-to-bottom {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(8, 11, 20, 0.5) 50%,
+    var(--color-surface) 100%
+  );
+}
+
+.gradient-to-right {
+  background: linear-gradient(
+    to right,
+    var(--color-surface) 0%,
+    transparent 100%
+  );
+}
+
+.gradient-hero {
+  background: linear-gradient(
+    105deg,
+    var(--color-surface) 35%,
+    transparent 65%
+  );
+}
+
+/* ─── Cinematic Image Hover ───────────────────────────────── */
+.media-card-img {
+  transition: transform var(--transition-slow), filter var(--transition-slow);
+  will-change: transform;
+}
+
+.media-card:hover .media-card-img {
+  transform: scale(1.06);
+  filter: brightness(1.1) saturate(1.15);
+}
+
+/* ─── Accent Underline Hover Effect ──────────────────────── */
+.hover-underline {
+  position: relative;
+}
+.hover-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-accent);
+  transition: width var(--transition-base);
+  border-radius: 99px;
+}
+.hover-underline:hover::after {
+  width: 100%;
+}
+/* ═══════════════════════════════════════════════
+   STEP 4 — DETAIL PAGE STYLES
+   Paste into index.css after Step 3 styles
+   ═══════════════════════════════════════════════ */
+
+/* ─── Back Button ───────────────────────────────── */
+.back-btn {
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* ─── Genre Tags ────────────────────────────────── */
+.genre-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.75);
+  transition: all 0.2s ease;
+}
+.genre-tag:hover {
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 50%, transparent);
+  color: white;
+}
+
+/* ─── Detail Watchlist Button ───────────────────── */
+.btn-detail-watchlist {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+.btn-detail-watchlist:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.btn-detail-watchlist.active {
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 60%, transparent);
+  color: var(--color-accent);
+}
+
+/* ─── Cast Row ──────────────────────────────────── */
+.cast-row {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.cast-row::-webkit-scrollbar { display: none; }
+
+.cast-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(8px);
+}
+.cast-arrow:hover {
+  background: var(--color-accent);
+  color: black;
+  border-color: var(--color-accent);
+}
+
+/* ─── Stat Pills ────────────────────────────────── */
+.stat-pill {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.stat-pill:last-child {
+  border-bottom: none;
+}
+
+/* ─── Sidebar ───────────────────────────────────── */
+.detail-sidebar {
+  backdrop-filter: blur(12px);
+}
+
+/* ─── Season Cards ──────────────────────────────── */
+.season-card {
+  transition: transform 0.2s ease;
+}
+.season-card:hover {
+  transform: translateY(-3px);
+}
+
+/* ─── Trailer Modal ─────────────────────────────── */
+.trailer-overlay {
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(8px);
+}
+.trailer-modal {
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8),
+              0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Video list item ───────────────────────────── */
+.video-item {
+  cursor: pointer;
+}
+/* ═══════════════════════════════════════════════
+   STEP 5 — SEARCH & DISCOVER STYLES
+   Paste into index.css after Step 4 styles
+   ═══════════════════════════════════════════════ */
+
+/* ─── Search Input ──────────────────────────────── */
+.search-input-wrap {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+.search-input-wrap:focus-within {
+  box-shadow: 0 4px 32px color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+/* ─── Search Filter Tabs ────────────────────────── */
+.search-filter-tab {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.5);
+  border-radius: 12px;
+}
+.search-filter-tab:hover {
+  color: white;
+  background: rgba(255,255,255,0.09);
+}
+.search-filter-tab.active {
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+  color: var(--color-accent);
+}
+
+/* ─── Discover Select ───────────────────────────── */
+.discover-select {
+  background-color: rgba(255,255,255,0.05);
+}
+.discover-select option {
+  background: #0d0d0d;
+  color: white;
+}
+
+/* ─── Genre Filter Chip ─────────────────────────── */
+.genre-filter-chip {
+  transition: all 0.18s ease;
+}
+
+/* ─── Trending suggestion buttons ───────────────── */
+.trending-suggestion-btn {
+  min-height: 52px;
+}
+
+/* ─── Load More Button ──────────────────────────── */
+.load-more-btn {
+  min-width: 180px;
+}
+
+/* ─── No-scrollbar utility (if not already present) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* ═══════════════════════════════════════════════
+   STEP 6 — DISCOVER PAGE STYLES
+   Paste into index.css after Step 5 styles
+   ═══════════════════════════════════════════════ */
+
+/* ─── Type Toggle ───────────────────────────────── */
+.type-toggle-btn {
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+.type-toggle-btn.active {
+  background: var(--color-accent);
+  color: black;
+}
+.type-toggle-btn:not(.active):hover {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ─── Dropdown Button ───────────────────────────── */
+.discover-dropdown-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.discover-dropdown-btn:hover {
+  background: rgba(255, 255, 255, 0.10);
+  color: white;
+}
+
+/* ─── Dropdown Menu ─────────────────────────────── */
+.discover-dropdown-menu {
+  background: #1a1a1f;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(16px);
+}
+.discover-dropdown-item {
+  color: rgba(255, 255, 255, 0.55);
+  transition: all 0.15s;
+}
+.discover-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+}
+.discover-dropdown-item.active {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+/* ─── Genre Filter Pills ────────────────────────── */
+.genre-filter-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 255, 0.50);
+  cursor: pointer;
+}
+.genre-filter-pill:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 255, 0.80);
+}
+.genre-filter-pill.active {
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+  color: var(--color-accent);
+}
+
+/* ─── Active Filter Tags ────────────────────────── */
+.active-filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+  color: var(--color-accent);
+}
+/* ═══════════════════════════════════════════════
+   STEP 7 — WATCHLIST, PROFILE, MOOD STYLES
+   Paste into index.css after Step 6 styles
+   ═══════════════════════════════════════════════ */
+
+/* ─── Profile Stat Cards ────────────────────────── */
+.profile-stat-card {
+  transition: transform 0.2s ease;
+}
+.profile-stat-card:hover {
+  transform: translateY(-3px);
+}
+
+/* ─── Mood Pick Card ────────────────────────────── */
+.mood-pick-card {
+  cursor: pointer;
+  border: none;
+  color: inherit;
+}
+.mood-pick-card:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+
+/* ─── Select override (dark) ────────────────────── */
+select option {
+  background: #1a1a1f;
+  color: white;
+}
+/* ═══════════════════════════════════════════════════════
+   STEP 8 — FINAL POLISH
+   Paste into index.css after all previous step styles
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── Navbar Base ───────────────────────────────────── */
+.navbar {
+  background: transparent;
+  transition: background 0.3s ease, backdrop-filter 0.3s ease, box-shadow 0.3s ease;
+}
+.navbar.scrolled {
+  background: rgba(10, 10, 12, 0.82);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ─── Navbar Logo ───────────────────────────────────── */
+.navbar-logo {
+  color: white;
+  text-decoration: none;
+  letter-spacing: -0.04em;
+}
+
+/* ─── Navbar Links ──────────────────────────────────── */
+.navbar-link {
+  color: rgba(255, 255, 255, 0.50);
+  text-decoration: none;
+  transition: color 0.18s ease, background 0.18s ease;
+}
+.navbar-link:hover {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.06);
+}
+.navbar-link.active {
+  color: white;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Navbar Icon Buttons ───────────────────────────── */
+.navbar-icon-btn {
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.18s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+.navbar-icon-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ─── Navbar Search Input ───────────────────────────── */
+.navbar-search-input {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
+}
+
+/* ─── Quick Results Dropdown ────────────────────────── */
+.quick-results {
+  background: #131316;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(20px);
+}
+.quick-result-item {
+  transition: background 0.15s ease;
+}
+
+/* ─── Mobile Drawer ─────────────────────────────────── */
+.mobile-drawer {
+  background: #0f0f12;
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+}
+.mobile-nav-link {
+  color: rgba(255, 255, 255, 0.55);
+  text-decoration: none;
+}
+.mobile-nav-link:hover,
+.mobile-nav-link.active {
+  color: white;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* ─── Page Transition Root ──────────────────────────── */
+.layout-root {
+  background: var(--color-bg);
+}
+
+/* ─── Focus Visible ─────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ─── Custom Scrollbar ──────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.22); }
+
+/* ─── Selection Color ───────────────────────────────── */
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  color: white;
+}
+
+/* ─── Smooth Image Loading ──────────────────────────── */
+img {
+  transition: opacity 0.4s ease;
+}
+
+/* ─── Link Reset ────────────────────────────────────── */
+a { text-decoration: none; color: inherit; }
+
+/* ─── Button Reset ──────────────────────────────────── */
+button { border: none; background: none; cursor: pointer; font-family: inherit; }
+
+/* ─── Grain overlay (subtle film texture) ──────────── */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+}
+
+/* ─── Smooth accent color transition ───────────────── */
+:root {
+  transition: --color-accent 0.5s ease;
+}
+* {
+  transition-property: background-color, border-color, color, box-shadow, outline-color;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
+}
+/* Override: keep transforms snappy */
+.media-card, .mood-chip, button, a {
+  transition-duration: 0.15s;
+}
+
+/* ─── Page enter animation ──────────────────────────── */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Loading bar (top of page) ─────────────────────── */
+@keyframes loadBar {
+  0%   { width: 0%;   opacity: 1; }
+  70%  { width: 85%;  opacity: 1; }
+  100% { width: 100%; opacity: 0; }
+}
+.load-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: var(--color-accent);
+  animation: loadBar 0.8s ease-out forwards;
+  z-index: 9998;
+  box-shadow: 0 0 12px var(--color-accent);
+}
+
+/* ─── Tooltip utility ───────────────────────────────── */
+[data-tip] { position: relative; }
+[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* ─── Responsive type scale ─────────────────────────── */
+@media (max-width: 640px) {
+  .hero-title { font-size: 2.4rem !important; }
+  .detail-hero { height: 65vh !important; }
+}
+/* ── Step Login: spinner keyframe ── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
